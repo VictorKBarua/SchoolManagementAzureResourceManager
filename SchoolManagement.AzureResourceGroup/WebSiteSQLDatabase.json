@@ -54,10 +54,9 @@
   },
   "variables": {
     "hostingPlanName": "[format('hostingplan{0}', uniqueString(resourceGroup().id))]",
-    "websiteName": "[format('SchoolWeb{0}', uniqueString(resourceGroup().id))]",
+    "websiteName": "[format('SchoolAPI{0}', uniqueString(resourceGroup().id))]",
     "sqlserverName": "[format('schoolmanagement{0}', uniqueString(resourceGroup().id))]",
-    "databaseName": "Db_SchoolManagement",
-    "webAPIName": "[concat('WebAPI', uniqueString(resourceGroup().id))]"
+    "databaseName": "Db_SchoolManagement"
   },
   "resources": [
     {
@@ -125,7 +124,7 @@
       "location": "[parameters('location')]",
       "tags": {
         "[format('hidden-related:{0}', resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName')))]": "empty",
-        "displayName": "Website"
+        "displayName": "Website_API"
       },
       "properties": {
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
@@ -137,7 +136,7 @@
     {
       "type": "Microsoft.Web/sites/config",
       "apiVersion": "2020-12-01",
-      "name": "[format('{0}/{1}', variables('websiteName'), 'connectionstrings')]",
+      "name": "[format('{0}/{1}', variables('websiteName'), 'SchoolDbConnection')]",
       "properties": {
         "DefaultConnection": {
           "value": "[format('Data Source=tcp:{0},1433;Initial Catalog={1};User Id={2}@{3};Password={4};', reference(resourceId('Microsoft.Sql/servers', variables('sqlserverName'))).fullyQualifiedDomainName, variables('databaseName'), parameters('sqlAdministratorLogin'), reference(resourceId('Microsoft.Sql/servers', variables('sqlserverName'))).fullyQualifiedDomainName, parameters('sqlAdministratorLoginPassword'))]",
@@ -165,27 +164,7 @@
       "dependsOn": [
         "[resourceId('Microsoft.Web/sites', variables('websiteName'))]"
       ]
-    },
-    {
-      "name": "[variables('webAPIName')]",
-      "type": "Microsoft.Web/sites",
-      "location": "[parameters('location')]",
-      "apiVersion": "2022-03-01",
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
-      ],
-      "tags": {
-        "[concat('hidden-related:', resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName')))]": "Resource",
-        "displayName": "WebAPI"
-      },
-      "properties": {
-        "siteConfig": "[union(variables('configReference')[parameters('language')], createObject('minTlsVersion', '1.2', 'scmMinTlsVersion', '1.2', 'ftpsState', 'FtpsOnly'))]",
-        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
-        "httpsOnly": true
-      },
-      "identity": {
-        "type": "SystemAssigned"
-      }
     }
+
   ]
 }
